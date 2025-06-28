@@ -53,8 +53,14 @@ __global__ void grayscaleConversionKernel(int* p_in_d, int* p_out_d, int width, 
     int g = p_in_d[rgbOffset + 1];
     int b = p_in_d[rgbOffset + 2];
 
-    float luminance_val = 0.21f * r + 0.72f * g + 0.07f * b;
-    p_out_d[pixelOffset] = static_cast<int>(roundf(luminance_val));
+    // Fixed-point arithmetic for deterministic results
+    // Coefficients are scaled by 256: 0.21*256=54, 0.72*256=184, 0.07*256=18
+    int luminance_val = (r * 54 + g * 184 + b * 18 + 128) >> 8; // +128 for rounding
+
+    // Clamp the value to be safe (optional but good practice)
+    if (luminance_val > 255) luminance_val = 255;
+
+    p_out_d[pixelOffset] = luminance_val;
   }
 }
 
@@ -76,8 +82,14 @@ void computeSequentially(std::vector<int> p_in, std::vector<int> p_out, int size
     int g = p_in[rgbOffset + 1];
     int b = p_in[rgbOffset + 2];
 
-    float luminance_val = 0.21f * r + 0.72f * g + 0.07f * b;
-    p_out[i] = static_cast<int>(std::round(luminance_val));
+    // Fixed-point arithmetic for deterministic results
+    // Coefficients are scaled by 256: 0.21*256=54, 0.72*256=184, 0.07*256=18
+    int luminance_val = (r * 54 + g * 184 + b * 18 + 128) >> 8; // +128 for rounding
+
+    // Clamp the value to be safe (optional but good practice)
+    if (luminance_val > 255) luminance_val = 255;
+
+    p_out[i] = luminance_val;
 
   }
 }
