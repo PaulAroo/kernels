@@ -40,10 +40,6 @@ __global__ void grayscaleConversionKernel(int* p_in_d, int* p_out_d, int width, 
   const int row = blockIdx.y * blockDim.y + threadIdx.y;
   const int col = blockIdx.x * blockDim.x + threadIdx.x;
 
-  // this is slower (mem access isn't coalesced?)
-  // const size_t col = blockIdx.y * blockDim.y + threadIdx.y;
-  // const size_t row = blockIdx.x * blockDim.x + threadIdx.x;
-
   // Assume row-major form of storage
   if(col < width && row < height) {
     const size_t pixelOffset = row * width + col;
@@ -64,7 +60,7 @@ __global__ void grayscaleConversionKernel(int* p_in_d, int* p_out_d, int width, 
   }
 }
 
-void compareSequentialAndParallelResults(std::vector<int> parr, std::vector<int> seq, int size) {
+void compareSequentialAndParallelResults(std::vector<int>& parr, std::vector<int>& seq, int size) {
   for(size_t i = 0; i < size; i++) {
     if(parr[i] != seq[i]) {
       std::cout << "Error: results do not match at index " << i << ", " << parr[i] << " is not equal to " << seq[i] << "\n";
@@ -86,7 +82,6 @@ void computeSequentially(std::vector<int> p_in, std::vector<int> p_out, int size
     // Coefficients are scaled by 256: 0.21*256=54, 0.72*256=184, 0.07*256=18
     int luminance_val = (r * 54 + g * 184 + b * 18 + 128) >> 8; // +128 for rounding
 
-    // Clamp the value to be safe (optional but good practice)
     if (luminance_val > 255) luminance_val = 255;
 
     p_out[i] = luminance_val;
@@ -95,26 +90,14 @@ void computeSequentially(std::vector<int> p_in, std::vector<int> p_out, int size
 }
 
 void initializeData(std::vector<int> p_in_h, size_t size) {
-  // srand(time(NULL)); randomized
-  srand(42); // Seed the random number generator
+  srand(42);
 
   for(size_t i = 0; i < size; i++) {
-    p_in_h[i] = rand() % 256; // generate random numbers between 0 and 255
+    p_in_h[i] = rand() % 256;
   }
 }
 
-
 int main(int argc, char** argv) {
-
-  // int device;
-  // cudaGetDevice(&device);
-
-  // cudaDeviceProp props;
-  // cudaGetDeviceProperties(&props, device);
-
-  // std::cout << "Device: " << props.name << "\n";
-  // std::cout << "Compute capability: " << props.major << "." << props.minor << "\n";
-
   if(argc < 3) {
     printf("usage: ./grayscale.out <WIDTH> <HEIGHT> \n");
     exit(1);
@@ -128,7 +111,7 @@ int main(int argc, char** argv) {
 
   std::vector<int> p_in_h(size);
   std::vector<int> p_out_h(reduced_size);
-  
+
   initializeData(p_in_h, size);
 
   int* p_in_d;
@@ -151,7 +134,7 @@ int main(int argc, char** argv) {
     cudaDeviceSynchronize();
   });
   std::cout << "GPU: " << gpu_time_ms << " ms" << std::endl;
-  
+
   cudaMemcpy(p_out_h.data(), p_out_d, reduced_size * sizeof(int), cudaMemcpyDeviceToHost);
 
   std::vector<int> p_out(reduced_size);
@@ -162,7 +145,6 @@ int main(int argc, char** argv) {
   std::cout << "CPU: " << cpu_time_ms << " ms" << std::endl;
 
   compareSequentialAndParallelResults(p_out_h, p_out, reduced_size);
-
 
   cudaFree(p_in_d);
   cudaFree(p_out_d);
