@@ -8,10 +8,10 @@
  * All matrices are stored in row-major format
  */
 
-#include "utility.hpp"
 #include <iostream>
 #include <cassert>
-#include <chrono>
+// #include <chrono>
+#include "utils.hpp"
 
 #define	EXIT_FAILURE	1	/* Failing exit status.  */
 #define	EXIT_SUCCESS	0	/* Successful exit status.  */
@@ -106,11 +106,6 @@ int main(int argc, char** argv) {
 
   std::vector<int> C(M*N);
 
-  // for (int i = 0; i < A.size(); ++i) {
-  //   std::cout << A[i] << "\t" << B[i] << "\n";
-  // }
-
-  
   int* A_d;
   int* B_d;
   int* C_d;
@@ -130,24 +125,20 @@ int main(int argc, char** argv) {
   );
   dim3 const numThreads(NUM_THREADS_PER_DIM, NUM_THREADS_PER_DIM, 1);
 
-  // naive_kernel<<<numBlocks, numThreads>>>(A_d, ldA, B_d, ldB, C_d, ldC, M, N, K);
-  // cudaDeviceSynchronize();
-
-  long gpu_time_ms = benchmark_one_ms([&]() {
+  long gpu_time_ns = benchmark([&]() {
     naive_kernel<<<numBlocks, numThreads>>>(A_d, ldA, B_d, ldB, C_d, ldC, M, N, K);
     cudaDeviceSynchronize();
   });
-  std::cout << "GPU: " << gpu_time_ms << " ms" << std::endl;
+  std::cout << "GPU: " << gpu_time_ns << " ns" << std::endl;
 
   cudaMemcpy(C.data(), C_d, sizeof(int) * C.size(), cudaMemcpyDeviceToHost);
 
   std::vector<int> C_seq(M*N);
-  // computeSequential(A, B, C_seq, K, ldA, ldB);
 
-  long cpu_time_ms = benchmark_one_ms([&]() {
+  long cpu_time_ns = benchmark([&]() {
     computeSequential(A, B, C_seq, K, N);
   });
-  std::cout << "CPU: " << cpu_time_ms << " ms" << std::endl;
+  std::cout << "CPU: " << cpu_time_ns << " ns" << std::endl;
 
   compareSequentialAndParallelResults(C, C_seq);
 

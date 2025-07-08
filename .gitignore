@@ -1,2 +1,6 @@
 .vscode
+
+# Ignore build artifacts
+/build/
+*.o
 *.out
