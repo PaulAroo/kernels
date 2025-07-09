@@ -11,7 +11,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-#define CUDA_CHECK(call)                                                    \
+#define try_CUDA(call)                                                      \
     do {                                                                    \
         cudaError_t err = call;                                             \
         if (err != cudaSuccess) {                                           \
@@ -26,11 +26,11 @@ double benchmark(F &&func, int warmup_runs = 10, int actual_runs = 50,
                  Args &&...args) {
 
   // warm up
-  for (size_t i = 0; i < warmup_runs; i++) {
+  for (size_t i = 0; i < warmup_runs; ++i) {
     func(std::forward<Args>(args)...);
   }
   auto timer = StopWatch<chrono_alias::ns>();
-  for (size_t i = 0; i < actual_runs; i++) {
+  for (size_t i = 0; i < actual_runs; ++i) {
     timer.start();
     func(std::forward<Args>(args)...);
     timer.stop();
@@ -65,4 +65,24 @@ void fill_random(T* v, size_t const n, std::seed_seq& s) {
 template<typename T>
 inline void fill_random(T* v, size_t const n, std::seed_seq&& s) {
   fill_random<T>(v, n, s);
+}
+
+
+// template<class F>
+// long benchmark_one_ms(F&& f) {
+  // auto start = std::chrono::steady_clock::now();
+  // f();
+  // auto end = std::chrono::steady_clock::now();
+  // return std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+// }
+
+
+template<typename T>
+void compareSequentialAndParallelResults(std::vector<T> parr, std::vector<T> seq) {
+  for(size_t i = 0; i < parr.size(); ++i) {
+    if(parr[i] != seq[i]) {
+      std::cout << "Error: results do not match at index " << i << ", " << parr[i] << " is not equal to " << seq[i] << "\n";
+      exit(1);
+    }
+  }
 }
