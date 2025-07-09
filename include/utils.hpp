@@ -22,14 +22,14 @@
     } while (0)
 
 template <typename F, typename... Args>
-double benchmark(F &&func, int warmup_runs = 10, int actual_runs = 50,
+double benchmark(F &&func, int warmup_runs = 10, int actual_runs = 30,
                  Args &&...args) {
 
   // warm up
   for (size_t i = 0; i < warmup_runs; ++i) {
     func(std::forward<Args>(args)...);
   }
-  auto timer = StopWatch<chrono_alias::ns>();
+  auto timer = StopWatch<chrono_alias::ms>();
   for (size_t i = 0; i < actual_runs; ++i) {
     timer.start();
     func(std::forward<Args>(args)...);
@@ -75,14 +75,3 @@ inline void fill_random(T* v, size_t const n, std::seed_seq&& s) {
   // auto end = std::chrono::steady_clock::now();
   // return std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 // }
-
-
-template<typename T>
-void compareSequentialAndParallelResults(std::vector<T> parr, std::vector<T> seq) {
-  for(size_t i = 0; i < parr.size(); ++i) {
-    if(parr[i] != seq[i]) {
-      std::cout << "Error: results do not match at index " << i << ", " << parr[i] << " is not equal to " << seq[i] << "\n";
-      exit(1);
-    }
-  }
-}

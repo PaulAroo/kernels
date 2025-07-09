@@ -11,6 +11,7 @@
 #include <iostream>
 #include <cassert>
 #include "utils.hpp"
+#include "validate.hpp"
 
 #define	EXIT_FAILURE	1	/* Failing exit status.  */
 #define	EXIT_SUCCESS	0	/* Successful exit status.  */
@@ -103,22 +104,22 @@ int main(int argc, char** argv) {
   );
   dim3 const numThreads(NUM_THREADS_PER_DIM, NUM_THREADS_PER_DIM, 1);
 
-  long gpu_time_ns = benchmark([&]() {
+  long gpu_time_ms = benchmark([&]() {
     naive_kernel<<<numBlocks, numThreads>>>(A_d, ldA, B_d, ldB, C_d, ldC, M, N, K);
+    try_CUDA(cudaGetLastError());
+    try_CUDA(cudaDeviceSynchronize());
   });
-  try_CUDA(cudaGetLastError());
-  try_CUDA(cudaDeviceSynchronize());
 
-  std::cout << "GPU: " << gpu_time_ns << " ns" << std::endl;
+  std::cout << "GPU: " << gpu_time_ms << " ms" << std::endl;
 
   try_CUDA(cudaMemcpy(C.data(), C_d, sizeof(float) * C.size(), cudaMemcpyDeviceToHost));
 
   std::vector<float> C_seq(M*N);
 
-  long cpu_time_ns = benchmark([&]() {
+  long cpu_time_ms = benchmark([&]() {
     computeSequentialMatrixMul(A, B, C_seq, K, N);
   });
-  std::cout << "CPU: " << cpu_time_ns << " ns" << std::endl;
+  std::cout << "CPU: " << cpu_time_ms << " ms" << std::endl;
 
   compareSequentialAndParallelResults(C, C_seq);
 
