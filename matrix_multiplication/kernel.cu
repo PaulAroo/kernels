@@ -4,8 +4,12 @@
  * - A : M * K
  * - B : K * N
  * - C : M * N
- *
+
  * All matrices are stored in row-major format
+
+ * - ldA: leading dimension of A === K
+ * - ldB:                      B === N
+ * - ldC:                      C === N
  */
 
 #include <iostream>
@@ -17,8 +21,34 @@
 #define	EXIT_SUCCESS	0	/* Successful exit status.  */
 #define NUM_THREADS_PER_DIM 32
 
+//  /*
+//  * Each thread computes a row in output matrix C
+//  * Memory access -> Global memory
+//  */
+// template<typename T>
+// __global__ void naive_kernel(
+//   T const* const A, size_t const ldA,
+//   T const* const B, size_t const ldB,
+//   T* const C, size_t const ldC,
+//   size_t const M, size_t const N, size_t const K
+// ) {
+//   size_t const row = blockDim.y * blockIdx.y + threadIdx.y;
+//   size_t const col = blockDim.x * blockIdx.x + threadIdx.x;
+
+//   if((col + ldA) < N && row < M)
+
+//   if(col < N && row < M ) {
+//     T accumulator = static_cast<T>(0);
+//     for(size_t i = 0; i < K; ++i) {
+//       accumulator += A[row * ldA + i] * B[i * ldB + col];
+//     }
+//     C[row * ldC + col] = accumulator;
+//   }
+// }
+
+
  /*
- * Each thread computes a pofloat in output matrix C
+ * Each thread computes a point in output matrix C
  * Memory access -> Global memory
  */
 template<typename T>
