@@ -69,13 +69,11 @@ int main(int argc, char** argv) {
       exit(EXIT_FAILURE);
   }
 
-  // printGPUInfo();
+  printGPUInfo();
 
   size_t const M = std::stoll(argv[1]);
   size_t const N = std::stoll(argv[2]);
   size_t const ldA = N;
-
-  
 
   // initialize data
   std::vector<float> A(M*N);
@@ -101,7 +99,7 @@ int main(int argc, char** argv) {
   const dim3 numBlocks((N + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK);
   dim3 const numThreads(THREADS_PER_BLOCK);
 
-  long gpu_time_ms = benchmark([&]() {
+  double gpu_time_ms = benchmark<chrono_alias::ms>([&]() {
     matVecMul<<<numBlocks, numThreads>>>(A_d, ldA, B_d, C_d, M, N);
     try_CUDA(cudaGetLastError());
     try_CUDA(cudaDeviceSynchronize());
@@ -113,7 +111,7 @@ int main(int argc, char** argv) {
 
   std::vector<float> C_seq(N);
 
-  long cpu_time_ms = benchmark([&]() {
+  double cpu_time_ms = benchmark<chrono_alias::ms>([&]() {
     computeSequentialMatVecMul(A, ldA, B, C_seq);
   });
   std::cout << "CPU: " << cpu_time_ms << " ms" << std::endl;

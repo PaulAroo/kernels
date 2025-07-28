@@ -21,7 +21,7 @@
         }                                                                   \
     } while (0)
 
-template <typename F, typename... Args>
+template <typename T, typename F, typename... Args>
 double benchmark(F &&func, int warmup_runs = 10, int actual_runs = 30,
                  Args &&...args) {
 
@@ -29,7 +29,7 @@ double benchmark(F &&func, int warmup_runs = 10, int actual_runs = 30,
   for (size_t i = 0; i < warmup_runs; ++i) {
     func(std::forward<Args>(args)...);
   }
-  auto timer = StopWatch<chrono_alias::ms>();
+  auto timer = StopWatch<T>();
   for (size_t i = 0; i < actual_runs; ++i) {
     timer.start();
     func(std::forward<Args>(args)...);
